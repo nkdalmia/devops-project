@@ -23,3 +23,21 @@ fi
 echo "Building the Maven project on Jenkins"
 # Build the project
 curl -u $USERNAME:$PASSWORD -X POST "http://localhost:8080/job/game-of-life_$branch/build"
+
+# Check the build status. Will need to reject the commit if the build is unstable
+
+JOB_URL="http://localhost:8080/job/game_of_life_$branch"
+JOB_STATUS_URL="${JOB_URL}/lastBuild/api/json"
+
+GREP_RETURN_CODE=0
+
+# Poll every thirty seconds until the build is finished
+while [ $GREP_RETURN_CODE -eq 0 ]
+do
+    sleep 10
+    # Grep will return 0 while the build is running:
+    curl -u $USERNAME:$PASSWORD --silent $JOB_STATUS_URL | grep result\":null > /dev/null
+    GREP_RETURN_CODE=$?
+done
+
+curl -u $USERNAME:$PASSWORD "http://localhost:8080/job/game_of_life/lastBuild/api/json" | grep 
